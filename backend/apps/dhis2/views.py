@@ -1,16 +1,7 @@
 from rest_framework import permissions, viewsets
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
 
 from .models import RawDHIS2Record
 from .serializers import RawDHIS2RecordSerializer
-
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def health_check(request):
-    return Response({'status': 'ok', 'service': 'mediation-layer'})
 
 
 class RawDHIS2RecordViewSet(viewsets.ReadOnlyModelViewSet):

@@ -3,9 +3,10 @@
 FR1.1: connect to the official Sierra Leone demo.
 FR1.2: retrieve aggregate indicators for districts/periods.
 
-Read-only, source-specific extraction only — no transformation logic —
-so this module can later be pointed at a different DHIS2 instance
-without touching the rest of the pipeline. Never writes back to DHIS2.
+Read-only, source-specific extraction only — no transformation logic,
+no Django model access — so this module can later be pointed at a
+different DHIS2 instance without touching the rest of the pipeline.
+Never writes back to DHIS2. Persistence lives in services.py.
 """
 from __future__ import annotations
 
@@ -32,6 +33,23 @@ class DHIS2Client:
         self.base_url = (base_url or settings.DHIS2_BASE_URL).rstrip('/')
         self.auth = (username or settings.DHIS2_USERNAME, password or settings.DHIS2_PASSWORD)
         self.timeout = timeout or settings.DHIS2_TIMEOUT_SECONDS
+
+    def check_connection(self) -> dict:
+        """FR1.1: authenticate and confirm the configured DHIS2 instance
+        is reachable, independently of any data pull.
+        """
+        response = self._get_following_redirects(f'{self.base_url}/api/system/info.json', params=None)
+        if not response.ok:
+            raise DHIS2ClientError(
+                f'DHIS2 returned HTTP {response.status_code} for system/info: {response.text}'
+            )
+        info = response.json()
+        return {
+            'version': info.get('version'),
+            'instance_name': info.get('systemName'),
+            'server_date': info.get('serverDate'),
+            'context_path': info.get('contextPath'),
+        }
 
     def fetch_analytics(self, dx: list[str], ou: str, pe: str) -> list[dict]:
         """FR1.2: pull /api/analytics for the given data elements, org
@@ -80,6 +98,9 @@ class DHIS2Client:
                     raise DHIS2ClientError(f'Could not connect to {url}') from exc
                 except requests.exceptions.RequestException as exc:
                     raise DHIS2ClientError(f'Request to {url} failed: {exc}') from exc
+
+                if response.status_code == 401:
+                    raise DHIS2ClientError('DHIS2 authentication failed (check DHIS2_USERNAME/DHIS2_PASSWORD)')
 
                 if response.is_redirect:
                     location = response.headers.get('Location')

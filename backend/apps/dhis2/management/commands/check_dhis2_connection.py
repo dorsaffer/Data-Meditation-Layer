@@ -1,7 +1,7 @@
 from django.conf import settings
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
-from apps.core.services.dhis2_client import DHIS2Client, DHIS2ClientError
+from apps.dhis2.client import DHIS2Client, DHIS2ClientError
 
 
 class Command(BaseCommand):
@@ -12,8 +12,7 @@ class Command(BaseCommand):
         try:
             info = DHIS2Client().check_connection()
         except DHIS2ClientError as exc:
-            self.stderr.write(self.style.ERROR(f'Connection failed: {exc}'))
-            raise SystemExit(1)
+            raise CommandError(str(exc))
 
         self.stdout.write(self.style.SUCCESS('Connected.'))
         for key, value in info.items():

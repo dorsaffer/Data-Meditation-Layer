@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class CoreConfig(AppConfig):
+class Dhis2Config(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'apps.core'
+    name = 'apps.dhis2'
