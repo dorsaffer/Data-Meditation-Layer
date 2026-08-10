@@ -103,7 +103,14 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
     'http://localhost:3000,http://127.0.0.1:3000',
 ).split(',')
 
-# DHIS2 connection config (Sierra Leone demo)
-DHIS2_BASE_URL = os.environ.get('DHIS2_BASE_URL', 'https://play.dhis2.org/40/api')
+# DHIS2 connection config (official Sierra Leone demo, DHIS2 demo service).
+# play.dhis2.org/dev is the stable public alias; it 302-redirects to a
+# versioned play.im.dhis2.org host that changes over time, which is why
+# this is env-configurable rather than pointing at the versioned host
+# directly. See apps/core/services/dhis2_client.py for how auth is kept
+# across that redirect (requests/curl both drop Authorization on a
+# cross-host redirect by default).
+DHIS2_BASE_URL = os.environ.get('DHIS2_BASE_URL', 'https://play.dhis2.org/dev')
 DHIS2_USERNAME = os.environ.get('DHIS2_USERNAME', 'admin')
 DHIS2_PASSWORD = os.environ.get('DHIS2_PASSWORD', 'district')
+DHIS2_TIMEOUT_SECONDS = int(os.environ.get('DHIS2_TIMEOUT_SECONDS', '15'))
