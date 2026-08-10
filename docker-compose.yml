@@ -29,6 +29,23 @@ services:
         condition: service_healthy
     command: python manage.py runserver 0.0.0.0:8000
 
+  fhir-validator:
+    # Real HL7 FHIR R4 conformity validation (FR6.3): resources are POSTed
+    # to this server's $validate operation rather than only checked by a
+    # client-side library. Uses HAPI's bundled embedded DB - it's a
+    # stateless validation tool here, not a system of record, so it isn't
+    # wired into the shared Postgres.
+    image: hapiproject/hapi:latest
+    restart: unless-stopped
+    environment:
+      hapi.fhir.fhir_version: R4
+      hapi.fhir.default_encoding: json
+    ports:
+      - "8080:8080"
+    # No healthcheck: the hapiproject/hapi image has no shell (no sh,
+    # wget or curl), so a CMD-SHELL healthcheck can never execute here.
+    # Startup takes ~40s; readiness is GET /fhir/metadata returning 200.
+
   frontend:
     build: ./frontend
     restart: unless-stopped

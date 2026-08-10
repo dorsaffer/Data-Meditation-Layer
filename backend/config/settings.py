@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'apps.dhis2',
     'apps.data_products',
+    'apps.fhir',
 ]
 
 MIDDLEWARE = [
@@ -115,3 +116,10 @@ DHIS2_BASE_URL = os.environ.get('DHIS2_BASE_URL', 'https://play.dhis2.org/dev')
 DHIS2_USERNAME = os.environ.get('DHIS2_USERNAME', 'admin')
 DHIS2_PASSWORD = os.environ.get('DHIS2_PASSWORD', 'district')
 DHIS2_TIMEOUT_SECONDS = int(os.environ.get('DHIS2_TIMEOUT_SECONDS', '15'))
+
+# FR6.3: self-hosted FHIR R4 conformity validator (HAPI FHIR JPA server,
+# see docker-compose.yml's fhir-validator service). Self-hosted rather
+# than a public test server so exported resources never leave our trust
+# boundary, even though they carry no patient-level data.
+FHIR_VALIDATOR_URL = os.environ.get('FHIR_VALIDATOR_URL', 'http://fhir-validator:8080/fhir')
+FHIR_VALIDATOR_TIMEOUT_SECONDS = int(os.environ.get('FHIR_VALIDATOR_TIMEOUT_SECONDS', '30'))
