@@ -21,7 +21,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    'apps.core',
+    'apps.dhis2',
+    'apps.data_products',
 ]
 
 MIDDLEWARE = [
