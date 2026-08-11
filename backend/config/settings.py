@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'apps.data_products',
     'apps.fhir',
     'apps.terminology',
+    'apps.population',
 ]
 
 MIDDLEWARE = [

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import DataProduct, District, Indicator, Observation
+from .models import DataProduct, DataProductSource, District, Indicator, Observation
 
 
 class DistrictSerializer(serializers.ModelSerializer):
@@ -24,8 +24,15 @@ class ObservationSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class DataProductSourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DataProductSource
+        fields = ('id', 'name', 'description', 'extraction_date', 'reference_period')
+
+
 class DataProductSerializer(serializers.ModelSerializer):
     indicator = IndicatorSerializer(read_only=True)
+    sources = DataProductSourceSerializer(many=True, read_only=True)
 
     class Meta:
         model = DataProduct
