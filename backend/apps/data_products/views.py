@@ -1,16 +1,19 @@
-from rest_framework import permissions, viewsets
+from rest_framework import viewsets
+
+from apps.accounts.permissions import ANALYST, AUDITOR, DATA_PROVIDER, HasAnyRole
 
 from .models import DataProduct, Observation
 from .serializers import DataProductSerializer, ObservationSerializer
 
 
 class ObservationViewSet(viewsets.ReadOnlyModelViewSet):
-    """Canonical, clean data points. Same access gating as raw records:
-    this hasn't been through quality/privacy screening either (a later
-    pipeline stage), so it stays admin-only for now.
+    """Canonical, clean data points - the actual analytical dataset.
+    Gated to analyst (that's the role doing the analysis) and auditor
+    (audit trail); data_provider sees their raw records instead (see
+    apps/dhis2/views.py).
     """
     serializer_class = ObservationSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [HasAnyRole(ANALYST, AUDITOR)]
 
     def get_queryset(self):
         queryset = Observation.objects.select_related('indicator', 'district').all()
@@ -29,9 +32,10 @@ class ObservationViewSet(viewsets.ReadOnlyModelViewSet):
 
 class DataProductViewSet(viewsets.ReadOnlyModelViewSet):
     """Governance metadata only, never the underlying data values.
-    Any authenticated role may see this: it's how a partner org decides
-    whether to even request access to the actual Observations.
+    Any *recognized role* (not just any authenticated account) may see
+    this: it's how a partner org decides whether to even request access
+    to the actual Observations.
     """
     queryset = DataProduct.objects.select_related('indicator').all()
     serializer_class = DataProductSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [HasAnyRole(DATA_PROVIDER, ANALYST, AUDITOR)]

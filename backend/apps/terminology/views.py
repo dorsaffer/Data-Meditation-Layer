@@ -1,6 +1,8 @@
-from rest_framework import permissions, viewsets
+from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
+from apps.accounts.permissions import ANALYST, AUDITOR, HasAnyRole
 
 from .models import TerminologyMapping
 from .serializers import TerminologyMappingSerializer
@@ -12,12 +14,13 @@ class TerminologyMappingViewSet(viewsets.ReadOnlyModelViewSet):
     apps.terminology.services functions directly - same "governance
     decisions aren't made through this API" split as DataProduct.
 
-    Any authenticated role may read this: seeing what is/isn't mapped,
-    and why, is exactly what "reviewable and auditable" requires - it's
-    the underlying Observation values that stay access-gated.
+    Gated to analyst (works with the codings day-to-day) and auditor
+    (the review trail - who mapped what, and why - is exactly the kind
+    of thing an audit needs); data_provider has no need to see how
+    their indicators get coded downstream.
     """
     serializer_class = TerminologyMappingSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [HasAnyRole(ANALYST, AUDITOR)]
 
     def get_queryset(self):
         queryset = TerminologyMapping.objects.select_related('reviewer').all()

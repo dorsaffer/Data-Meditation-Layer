@@ -1,18 +1,20 @@
-from rest_framework import permissions, viewsets
+from rest_framework import viewsets
+
+from apps.accounts.permissions import AUDITOR, DATA_PROVIDER, HasAnyRole
 
 from .models import RawDHIS2Record
 from .serializers import RawDHIS2RecordSerializer
 
 
 class RawDHIS2RecordViewSet(viewsets.ReadOnlyModelViewSet):
-    """Read-only exposure of raw DHIS2 records. Admin-only: this data
-    hasn't been through quality/privacy screening yet, so partner-org
-    and researcher roles must never see it. Uses is_staff (DRF's
-    IsAdminUser) as the admin proxy for now, until organisation-aware
-    roles (assessment doc section 6.8) replace it.
+    """Read-only exposure of raw DHIS2 records. This data hasn't been
+    through quality/privacy screening yet, so it's gated to the roles
+    with a real reason to see it: data_provider (it's their submitted
+    source data) and auditor (audit trail). analyst works with the
+    cleaned Observations instead (see ObservationViewSet).
     """
     serializer_class = RawDHIS2RecordSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [HasAnyRole(DATA_PROVIDER, AUDITOR)]
 
     def get_queryset(self):
         queryset = RawDHIS2Record.objects.all()

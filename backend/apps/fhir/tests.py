@@ -3,7 +3,10 @@ from unittest import mock
 
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
+from rest_framework.test import APIClient
 
+from apps.accounts.permissions import ANALYST, AUDITOR, DATA_PROVIDER
+from apps.accounts.test_utils import RoleTestMixin
 from apps.data_products.models import District, Indicator, Observation
 from apps.dhis2.models import RawDHIS2Record
 from apps.fhir.builders import (
@@ -219,3 +222,29 @@ class ValidateResourceTests(SimpleTestCase):
 
         with self.assertRaises(FHIRValidationError):
             validate_resource('Organization', {'resourceType': 'Organization'})
+
+
+class FHIRValidationResultViewSetPermissionTests(RoleTestMixin, TestCase):
+    """analyst and auditor can read conformity results; data_provider
+    (and any unrecognized/no-role account) cannot.
+    """
+
+    def test_analyst_can_list(self):
+        response = self.client_for(self.make_user(role=ANALYST)).get('/api/core/fhir-validation-results/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_auditor_can_list(self):
+        response = self.client_for(self.make_user(role=AUDITOR)).get('/api/core/fhir-validation-results/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_data_provider_cannot_list(self):
+        response = self.client_for(self.make_user(role=DATA_PROVIDER)).get('/api/core/fhir-validation-results/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_no_role_cannot_list(self):
+        response = self.client_for(self.make_user()).get('/api/core/fhir-validation-results/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_anonymous_cannot_list(self):
+        response = APIClient().get('/api/core/fhir-validation-results/')
+        self.assertEqual(response.status_code, 401)

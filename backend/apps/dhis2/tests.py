@@ -1,5 +1,8 @@
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+from rest_framework.test import APIClient
 
+from apps.accounts.permissions import ANALYST, AUDITOR, DATA_PROVIDER
+from apps.accounts.test_utils import RoleTestMixin
 from apps.dhis2.client import DHIS2Client, DHIS2ClientError
 
 
@@ -52,3 +55,34 @@ class ParseAnalyticsTests(SimpleTestCase):
 
         with self.assertRaises(DHIS2ClientError):
             DHIS2Client._parse_analytics(payload, source_url='https://example.test')
+
+
+class RawDHIS2RecordViewSetPermissionTests(RoleTestMixin, TestCase):
+    """data_provider and auditor can read raw records; analyst (and any
+    unrecognized/no-role account) cannot - raw ingestion hasn't been
+    through quality/privacy screening.
+    """
+
+    def test_data_provider_can_list(self):
+        response = self.client_for(self.make_user(role=DATA_PROVIDER)).get('/api/core/raw-records/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_auditor_can_list(self):
+        response = self.client_for(self.make_user(role=AUDITOR)).get('/api/core/raw-records/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_staff_can_list(self):
+        response = self.client_for(self.make_user(is_staff=True)).get('/api/core/raw-records/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_analyst_cannot_list(self):
+        response = self.client_for(self.make_user(role=ANALYST)).get('/api/core/raw-records/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_no_role_cannot_list(self):
+        response = self.client_for(self.make_user()).get('/api/core/raw-records/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_anonymous_cannot_list(self):
+        response = APIClient().get('/api/core/raw-records/')
+        self.assertEqual(response.status_code, 401)

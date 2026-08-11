@@ -2,7 +2,9 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.test import Client, TestCase
-
+from rest_framework.test import APIClient
+from apps.accounts.permissions import ANALYST, AUDITOR, DATA_PROVIDER
+from apps.accounts.test_utils import RoleTestMixin
 from apps.data_products.models import Indicator
 from apps.terminology.models import TerminologyMapping
 from apps.terminology.services import (
@@ -184,3 +186,39 @@ class AdminReviewWorkflowTests(TestCase):
         self.mapping.refresh_from_db()
         self.assertEqual(self.mapping.reviewer, other_reviewer)
         self.assertEqual(self.mapping.target_display, 'Corrected display text')
+
+
+class TerminologyMappingViewSetPermissionTests(RoleTestMixin, TestCase):
+    """analyst and auditor can read the mapping catalog (list, and the
+    proposed/accepted actions); data_provider (and any unrecognized/
+    no-role account) cannot.
+    """
+
+    def test_analyst_can_list(self):
+        response = self.client_for(self.make_user(role=ANALYST)).get('/api/core/terminology-mappings/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_auditor_can_list(self):
+        response = self.client_for(self.make_user(role=AUDITOR)).get('/api/core/terminology-mappings/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_data_provider_cannot_list(self):
+        response = self.client_for(self.make_user(role=DATA_PROVIDER)).get('/api/core/terminology-mappings/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_no_role_cannot_list(self):
+        response = self.client_for(self.make_user()).get('/api/core/terminology-mappings/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_anonymous_cannot_list(self):
+        response = APIClient().get('/api/core/terminology-mappings/')
+        self.assertEqual(response.status_code, 401)
+
+    def test_data_provider_cannot_read_proposed_action(self):
+        response = self.client_for(self.make_user(role=DATA_PROVIDER)).get('/api/core/terminology-mappings/proposed/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_analyst_can_read_accepted_action(self):
+        response = self.client_for(self.make_user(role=ANALYST)).get('/api/core/terminology-mappings/accepted/')
+        self.assertEqual(response.status_code, 200)
+
