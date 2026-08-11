@@ -37,6 +37,10 @@ const COLOR_MAP: Record<string, string> = {
   conflicting_identifier: 'bg-red-100 text-red-800',
   out_of_period: 'bg-amber-100 text-amber-800',
   stale_data: 'bg-amber-100 text-amber-800',
+  // FR6.8 AuditEvent outcome
+  success: 'bg-emerald-100 text-emerald-800',
+  denied: 'bg-red-100 text-red-800',
+  failure: 'bg-red-100 text-red-800',
 }
 
 export function Badge({ value }: { value: string }) {

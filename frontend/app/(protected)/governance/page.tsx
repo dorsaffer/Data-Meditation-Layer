@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Badge } from '@/components/Badge'
 import { ForbiddenNotice } from '@/components/ForbiddenNotice'
 import { RoleGate } from '@/components/RoleGate'
-import { DataProduct, PopulationDataQualityIssue, RawDHIS2Record, TerminologyMapping } from '@/lib/api-client'
+import { AuditEvent, DataProduct, PopulationDataQualityIssue, RawDHIS2Record, TerminologyMapping } from '@/lib/api-client'
 import { useApiResource } from '@/lib/hooks/use-api-resource'
 
 function Section({ title, description, children }: { title: string; description: string; children: ReactNode }) {
@@ -127,6 +127,15 @@ export default function GovernancePage() {
         >
           <RoleGate allow={['analyst', 'auditor']}>
             <PopulationIssuesTable />
+          </RoleGate>
+        </Section>
+
+        <Section
+          title="Audit log"
+          description="FR6.8: every authentication attempt, access-denied event, and dataset action (acquire/transform/validate/publish/view/download), with actor, outcome and correlation ID. Auditor-only."
+        >
+          <RoleGate allow={['auditor']}>
+            <AuditLogTable />
           </RoleGate>
         </Section>
       </div>
@@ -271,6 +280,65 @@ function RawRecordsTable() {
       {data && data.length > 50 && (
         <p className="border-t border-slate-100 px-4 py-2 text-xs text-slate-400">
           Showing the first 50 of {data.length} records.
+        </p>
+      )}
+    </div>
+  )
+}
+
+function AuditLogTable() {
+  const { data, error, isLoading } = useApiResource<AuditEvent[]>('/api/core/audit-events/')
+
+  if (error?.status === 403) return <ForbiddenNotice roles={['auditor']} />
+  if (error) return <p className="text-sm text-red-600">Could not load the audit log.</p>
+  if (isLoading) return <p className="text-sm text-slate-500">Loading…</p>
+
+  const shown = data?.slice(0, 100) ?? []
+
+  return (
+    <div className="overflow-x-auto rounded-lg border border-slate-200">
+      <table className="min-w-full divide-y divide-slate-200 text-sm">
+        <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+          <tr>
+            <th className="px-4 py-2">Timestamp</th>
+            <th className="px-4 py-2">Actor</th>
+            <th className="px-4 py-2">Organisation</th>
+            <th className="px-4 py-2">Action</th>
+            <th className="px-4 py-2">Resource</th>
+            <th className="px-4 py-2">Outcome</th>
+            <th className="px-4 py-2">Correlation ID</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {shown.map((e) => (
+            <tr key={e.id}>
+              <td className="px-4 py-2 whitespace-nowrap text-slate-500">{new Date(e.timestamp).toLocaleString()}</td>
+              <td className="px-4 py-2 font-medium text-slate-900">{e.actor}</td>
+              <td className="px-4 py-2 text-slate-600">{e.organisation || '—'}</td>
+              <td className="px-4 py-2">
+                <Badge value={e.action} />
+              </td>
+              <td className="px-4 py-2 text-slate-600">
+                {e.resource_type ? `${e.resource_type}${e.resource_id ? `/${e.resource_id}` : ''}` : '—'}
+              </td>
+              <td className="px-4 py-2">
+                <Badge value={e.outcome} />
+              </td>
+              <td className="px-4 py-2 font-mono text-xs text-slate-400">{e.correlation_id.slice(0, 8)}</td>
+            </tr>
+          ))}
+          {data?.length === 0 && (
+            <tr>
+              <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
+                No audit events recorded yet.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+      {data && data.length > 100 && (
+        <p className="border-t border-slate-100 px-4 py-2 text-xs text-slate-400">
+          Showing the most recent 100 of {data.length} events.
         </p>
       )}
     </div>
