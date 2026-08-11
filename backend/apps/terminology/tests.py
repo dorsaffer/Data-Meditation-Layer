@@ -3,7 +3,6 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.test import Client, TestCase
 from rest_framework.test import APIClient
-
 from apps.accounts.permissions import ANALYST, AUDITOR, DATA_PROVIDER
 from apps.accounts.test_utils import RoleTestMixin
 from apps.data_products.models import Indicator
@@ -222,3 +221,4 @@ class TerminologyMappingViewSetPermissionTests(RoleTestMixin, TestCase):
     def test_analyst_can_read_accepted_action(self):
         response = self.client_for(self.make_user(role=ANALYST)).get('/api/core/terminology-mappings/accepted/')
         self.assertEqual(response.status_code, 200)
+

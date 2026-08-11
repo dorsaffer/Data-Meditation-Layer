@@ -72,6 +72,21 @@ class ResourceBuilderTests(SimpleTestCase):
         self.assertRegex(measure['name'], r'^[A-Za-z][A-Za-z0-9_]*$')
         self.assertEqual(measure['title'], 'ANC 1st visit')
 
+    def test_build_measure_omits_group_code_with_no_codings(self):
+        measure = build_measure(self.indicator)
+        self.assertNotIn('group', measure)
+
+    def test_build_measure_includes_group_code_when_codings_given(self):
+        codings = [{'system': 'http://hl7.org/fhir/sid/icd-10', 'code': 'Z34.9', 'display': 'x', 'version': 'v'}]
+        measure = build_measure(self.indicator, codings=codings)
+        self.assertEqual(measure['group'], [{'code': {'coding': codings, 'text': 'ANC 1st visit'}}])
+
+    def test_build_measure_report_mirrors_measure_group_code(self):
+        codings = [{'system': 'http://hl7.org/fhir/sid/icd-10', 'code': 'Z34.9', 'display': 'x', 'version': 'v'}]
+        measure = build_measure(self.indicator, codings=codings)
+        report = build_measure_report(self.observation, measure)
+        self.assertEqual(report['group'][0]['code'], measure['group'][0]['code'])
+
     def test_build_measure_report_references_measure_and_location(self):
         measure = build_measure(self.indicator)
         report = build_measure_report(self.observation, measure)
@@ -133,6 +148,30 @@ class BuildBundleTests(TestCase):
         resource_types = [entry['resource']['resourceType'] for entry in bundle['entry']]
         self.assertNotIn('Provenance', resource_types)
         self.assertNotIn('MeasureReport', resource_types)
+
+    def test_bundle_measure_carries_accepted_terminology_coding_only(self):
+        from django.contrib.auth import get_user_model
+
+        from apps.terminology.services import propose_mapping, review_mapping
+
+        proposed = propose_mapping(
+            source_system='DHIS2', source_code='DX_ANC1', source_display='ANC 1st visit',
+            target_terminology='icd10', target_code='Z34.9',
+            target_display='Encounter for supervision of normal pregnancy, unspecified, trimester unspecified',
+            terminology_version='ICD-10 2019', rationale='Semantic match on "antenatal".',
+        )
+        bundle = build_bundle(self.indicator)
+        measure = next(e['resource'] for e in bundle['entry'] if e['resource']['resourceType'] == 'Measure')
+        self.assertNotIn('group', measure, 'a PROPOSED mapping must never reach the FHIR export')
+
+        reviewer = get_user_model().objects.create_user(username='steward', password='x')
+        review_mapping(proposed, reviewer=reviewer, approve=True, rationale='Confirmed.')
+
+        bundle = build_bundle(self.indicator)
+        measure = next(e['resource'] for e in bundle['entry'] if e['resource']['resourceType'] == 'Measure')
+        report = next(e['resource'] for e in bundle['entry'] if e['resource']['resourceType'] == 'MeasureReport')
+        self.assertEqual(measure['group'][0]['code']['coding'][0]['code'], 'Z34.9')
+        self.assertEqual(report['group'][0]['code'], measure['group'][0]['code'])
 
 
 class ValidateResourceTests(SimpleTestCase):
