@@ -103,8 +103,55 @@ class DataProduct(models.Model):
     # a later phase). A list of role-name strings is the isolated,
     # documented MVP choice - swap for an M2M once roles are real.
     permitted_audience = models.JSONField(default=list, blank=True)
-    indicator = models.ForeignKey(Indicator, on_delete=models.CASCADE, related_name='data_products')
+    # Nullable: most DataProducts are one-per-Indicator (sync_data_product),
+    # but a cross-source, cross-indicator product (e.g. UHC District Service
+    # Coverage, apps.population) has no single owning Indicator - forcing it
+    # onto this FK would be wrong, not just awkward.
+    indicator = models.ForeignKey(
+        Indicator, on_delete=models.CASCADE, related_name='data_products', null=True, blank=True,
+    )
+    # Free-text methodology documentation for products that join more than
+    # one source (see apps.population) - blank for ordinary single-source
+    # products. Kept as plain text rather than structured fields since the
+    # "how" varies per product and isn't something the API ever needs to
+    # query on; DataProductSource below is the structured part (which
+    # sources, when).
+    join_strategy = models.TextField(
+        blank=True, default='',
+        help_text='How multiple sources were reconciled/joined (join key, unmatched handling).',
+    )
+    transformation_description = models.TextField(
+        blank=True, default='',
+        help_text='The transformation/formula applied, e.g. a derived metric definition.',
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.title
+
+
+class DataProductSource(models.Model):
+    """Retained provenance for one contributing source of a DataProduct.
+    A single-source product (the common case) simply has zero or one of
+    these; a joined product like UHC District Service Coverage has two.
+    Deliberately generic (not population-specific) so any future
+    multi-source product reuses this instead of growing more one-off
+    fields on DataProduct itself.
+    """
+
+    data_product = models.ForeignKey(DataProduct, on_delete=models.CASCADE, related_name='sources')
+    name = models.CharField(max_length=255, help_text='e.g. "Sierra Leone DHIS2" or the dataset\'s formal name.')
+    description = models.TextField(blank=True, default='')
+    extraction_date = models.DateField(
+        null=True, blank=True, help_text='When this source was pulled/extracted, if applicable.',
+    )
+    reference_period = models.CharField(
+        max_length=50, blank=True, default='',
+        help_text='The period the source data itself refers to, e.g. "2021" for a census year.',
+    )
+
+    class Meta:
+        ordering = ['id']
+
+    def __str__(self):
+        return f'{self.data_product.title} <- {self.name}'

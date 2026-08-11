@@ -16,6 +16,14 @@ const COLOR_MAP: Record<string, string> = {
   accepted: 'bg-emerald-100 text-emerald-800',
   rejected: 'bg-red-100 text-red-800',
   unmapped: 'bg-slate-100 text-slate-700',
+  // population data-quality issue types
+  missing_population: 'bg-red-100 text-red-800',
+  missing_dhis2_observation: 'bg-amber-100 text-amber-800',
+  unknown_district: 'bg-slate-100 text-slate-700',
+  duplicate_record: 'bg-red-100 text-red-800',
+  conflicting_identifier: 'bg-red-100 text-red-800',
+  out_of_period: 'bg-amber-100 text-amber-800',
+  stale_data: 'bg-amber-100 text-amber-800',
 }
 
 export function Badge({ value }: { value: string }) {

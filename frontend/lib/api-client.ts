@@ -104,6 +104,14 @@ export type SensitivityClassification = 'public' | 'restricted' | 'confidential'
 export type TransformationStatus = 'raw_only' | 'canonical' | 'fhir_mapped'
 export type QualityStatus = 'unscreened' | 'passed' | 'flagged'
 
+export interface DataProductSource {
+  id: number
+  name: string
+  description: string
+  extraction_date: string | null
+  reference_period: string
+}
+
 export interface DataProduct {
   id: number
   title: string
@@ -119,7 +127,11 @@ export interface DataProduct {
   transformation_status: TransformationStatus
   quality_status: QualityStatus
   permitted_audience: string[]
-  indicator: Indicator
+  // Null for cross-indicator, cross-source products (e.g. UHC District Service Coverage).
+  indicator: Indicator | null
+  join_strategy: string
+  transformation_description: string
+  sources: DataProductSource[]
   updated_at: string
 }
 
@@ -173,4 +185,49 @@ export interface RawDHIS2Record {
   raw_payload: unknown
   source_url: string
   fetched_at: string
+}
+
+export interface DistrictPopulation {
+  id: number
+  district: District
+  total_population: number
+  reference_year: number
+  source_record_count: number
+  updated_at: string
+}
+
+export type PopulationIssueType =
+  | 'missing_population'
+  | 'missing_dhis2_observation'
+  | 'unknown_district'
+  | 'duplicate_record'
+  | 'conflicting_identifier'
+  | 'out_of_period'
+  | 'stale_data'
+
+export interface PopulationDataQualityIssue {
+  id: number
+  issue_type: PopulationIssueType
+  district_name: string
+  detail: string
+  detected_at: string
+}
+
+export interface ServiceCoverageRow {
+  district_id: number
+  district: string
+  population: number | null
+  service_activity: number | null
+  ratio_percent: number | null
+  excluded: boolean
+  excluded_reason: string
+  potentially_underserved: boolean
+}
+
+export interface ServiceCoverageResponse {
+  indicator: string | null
+  period: string | null
+  reference_year: number | null
+  rows: ServiceCoverageRow[]
+  caveat: string
 }

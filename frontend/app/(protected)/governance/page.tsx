@@ -5,7 +5,7 @@ import { ReactNode } from 'react'
 import { Badge } from '@/components/Badge'
 import { ForbiddenNotice } from '@/components/ForbiddenNotice'
 import { RoleGate } from '@/components/RoleGate'
-import { DataProduct, RawDHIS2Record, TerminologyMapping } from '@/lib/api-client'
+import { DataProduct, PopulationDataQualityIssue, RawDHIS2Record, TerminologyMapping } from '@/lib/api-client'
 import { useApiResource } from '@/lib/hooks/use-api-resource'
 
 function Section({ title, description, children }: { title: string; description: string; children: ReactNode }) {
@@ -111,6 +111,15 @@ export default function GovernancePage() {
             <RawRecordsTable />
           </RoleGate>
         </Section>
+
+        <Section
+          title="Population data quality"
+          description="Issues detected while reconciling census population data against DHIS2 districts (see the UHC District Service Coverage product)."
+        >
+          <RoleGate allow={['analyst', 'auditor']}>
+            <PopulationIssuesTable />
+          </RoleGate>
+        </Section>
       </div>
     </div>
   )
@@ -157,6 +166,50 @@ function TerminologyAuditTable() {
             <tr>
               <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
                 No terminology mappings yet.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function PopulationIssuesTable() {
+  const { data, error, isLoading } = useApiResource<PopulationDataQualityIssue[]>(
+    '/api/core/population-data-quality-issues/',
+  )
+
+  if (error?.status === 403) return <ForbiddenNotice roles={['analyst', 'auditor']} />
+  if (error) return <p className="text-sm text-red-600">Could not load population data-quality issues.</p>
+  if (isLoading) return <p className="text-sm text-slate-500">Loading…</p>
+
+  return (
+    <div className="overflow-x-auto rounded-lg border border-slate-200">
+      <table className="min-w-full divide-y divide-slate-200 text-sm">
+        <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+          <tr>
+            <th className="px-4 py-2">Issue</th>
+            <th className="px-4 py-2">District</th>
+            <th className="px-4 py-2">Detail</th>
+            <th className="px-4 py-2">Detected</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {data?.map((issue) => (
+            <tr key={issue.id}>
+              <td className="px-4 py-2">
+                <Badge value={issue.issue_type} />
+              </td>
+              <td className="px-4 py-2 text-slate-900">{issue.district_name || '—'}</td>
+              <td className="px-4 py-2 text-slate-600">{issue.detail}</td>
+              <td className="px-4 py-2 text-slate-500">{new Date(issue.detected_at).toLocaleString()}</td>
+            </tr>
+          ))}
+          {data?.length === 0 && (
+            <tr>
+              <td colSpan={4} className="px-4 py-6 text-center text-slate-400">
+                No data-quality issues detected.
               </td>
             </tr>
           )}

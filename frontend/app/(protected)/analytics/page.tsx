@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 
 import { ConformityView } from '@/components/analytics/ConformityView'
 import { DistrictComparisonChart } from '@/components/analytics/DistrictComparisonChart'
+import { ServiceCoverageView } from '@/components/analytics/ServiceCoverageView'
 import { TrendChart } from '@/components/analytics/TrendChart'
 import { RoleGate } from '@/components/RoleGate'
 
@@ -41,6 +42,15 @@ export default function AnalyticsPage() {
           description="Data product quality screening and FHIR conformity check results."
         >
           <ConformityView />
+        </Section>
+
+        <Section
+          title="Service coverage vs. population (UHC)"
+          description="Reported service activity as a share of district population — an insight that needs both DHIS2 and population data together."
+        >
+          <RoleGate allow={['analyst', 'auditor']}>
+            <ServiceCoverageView />
+          </RoleGate>
         </Section>
       </div>
     </div>
