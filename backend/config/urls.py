@@ -13,6 +13,7 @@ urlpatterns = [
     # across this app-split refactor rather than renamed to api/dhis2/...
     path('api/core/', include('apps.dhis2.urls')),
     path('api/core/', include('apps.data_products.urls')),
+    path('api/core/', include('apps.fhir.urls')),
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
