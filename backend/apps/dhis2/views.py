@@ -1,12 +1,13 @@
 from rest_framework import viewsets
 
 from apps.accounts.permissions import AUDITOR, DATA_PROVIDER, HasAnyRole
+from apps.audit.mixins import AuditedReadOnlyViewSetMixin
 
 from .models import RawDHIS2Record
 from .serializers import RawDHIS2RecordSerializer
 
 
-class RawDHIS2RecordViewSet(viewsets.ReadOnlyModelViewSet):
+class RawDHIS2RecordViewSet(AuditedReadOnlyViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """Read-only exposure of raw DHIS2 records. This data hasn't been
     through quality/privacy screening yet, so it's gated to the roles
     with a real reason to see it: data_provider (it's their submitted

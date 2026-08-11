@@ -1,5 +1,9 @@
 from django.contrib import admin
 
+from apps.audit.context import audit_context
+from apps.audit.models import AuditEvent
+from apps.audit.services import record_event
+
 from .models import DataProduct, DataProductSource, District, Indicator, Observation, QualityCheckResult
 from .quality import run_quality_checks
 
@@ -71,8 +75,24 @@ class DataProductAdmin(admin.ModelAdmin):
     inlines = [DataProductSourceInline, QualityCheckResultInline]
     actions = ['recompute_quality_checks']
 
+    def save_model(self, request, obj, form, change):
+        """FR6.8: every hand-edit of governance metadata through this form
+        (sensitivity_classification, permitted_audience, governance_reviewed,
+        etc.) is an ADMIN_CHANGE - the same "actor is the real logged-in
+        user" pattern apps.terminology.admin.TerminologyMappingAdmin
+        already uses for its own review actions.
+        """
+        super().save_model(request, obj, form, change)
+        record_event(
+            AuditEvent.Action.ADMIN_CHANGE, AuditEvent.Outcome.SUCCESS,
+            resource_type='DataProduct', resource_id=obj.id,
+            actor=request.user.username,
+            detail={'changed_fields': form.changed_data},
+        )
+
     @admin.action(description='Recompute FR6.6/FR6.7 quality & privacy assessment')
     def recompute_quality_checks(self, request, queryset):
-        for product in queryset:
-            run_quality_checks(product)
+        with audit_context(actor=request.user.username):
+            for product in queryset:
+                run_quality_checks(product)
         self.message_user(request, f'Recomputed quality checks for {queryset.count()} data product(s).')

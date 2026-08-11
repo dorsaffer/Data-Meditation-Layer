@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'apps.audit',
     'apps.accounts',
     'apps.dhis2',
     'apps.data_products',
@@ -38,6 +39,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # FR6.8: assigns/propagates the correlation id every AuditEvent for a
+    # given request is tagged with - see apps/audit/middleware.py.
+    'apps.audit.middleware.CorrelationIdMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -95,6 +99,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    # FR6.8: every 401/403 raised by a permission or authentication check
+    # anywhere in the API flows through this handler, which logs it as an
+    # AuditEvent before falling back to DRF's normal error response - see
+    # apps/audit/exception_handler.py.
+    'EXCEPTION_HANDLER': 'apps.audit.exception_handler.audit_exception_handler',
 }
 
 SIMPLE_JWT = {

@@ -3,6 +3,7 @@ import json
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
+from apps.audit.context import audit_context
 from apps.data_products.models import Indicator
 from apps.fhir.services import FHIRValidationError, export_and_validate
 
@@ -38,7 +39,8 @@ class Command(BaseCommand):
         for indicator in indicators:
             self.stdout.write(f'Exporting "{indicator.name}" ({indicator.dhis2_dx_uid})...')
             try:
-                export = export_and_validate(indicator)
+                with audit_context(actor='system:export_fhir'):
+                    export = export_and_validate(indicator)
             except FHIRValidationError as exc:
                 raise CommandError(str(exc))
 

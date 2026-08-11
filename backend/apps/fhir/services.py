@@ -14,6 +14,9 @@ import logging
 import requests
 from django.conf import settings
 
+from apps.audit.models import AuditEvent
+from apps.audit.services import record_event
+
 logger = logging.getLogger(__name__)
 
 
@@ -108,5 +111,13 @@ def export_and_validate(indicator) -> dict:
         )
         for result in results
     ]
+
+    invalid_count = sum(1 for result in results if not result['is_valid'])
+    record_event(
+        AuditEvent.Action.DATA_VALIDATION,
+        AuditEvent.Outcome.FAILURE if invalid_count else AuditEvent.Outcome.SUCCESS,
+        resource_type='FHIRValidationResult', resource_id=indicator.id,
+        detail={'resource_count': len(results), 'invalid_count': invalid_count},
+    )
 
     return {'bundle': bundle, 'results': saved}

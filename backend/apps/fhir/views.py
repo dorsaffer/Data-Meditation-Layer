@@ -1,12 +1,13 @@
 from rest_framework import viewsets
 
 from apps.accounts.permissions import ANALYST, AUDITOR, HasAnyRole
+from apps.audit.mixins import AuditedReadOnlyViewSetMixin
 
 from .models import FHIRValidationResult
 from .serializers import FHIRValidationResultSerializer
 
 
-class FHIRValidationResultViewSet(viewsets.ReadOnlyModelViewSet):
+class FHIRValidationResultViewSet(AuditedReadOnlyViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """Conformity evidence for generated FHIR resources: fhir_json
     carries real aggregate values, not just governance metadata, so
     it's gated to analyst and auditor (the same roles that can see the
