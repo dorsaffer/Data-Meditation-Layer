@@ -67,6 +67,44 @@ export default function ProductDetailPage() {
               value={data.permitted_audience.length > 0 ? data.permitted_audience.join(', ') : ''}
             />
           </dl>
+
+          {(data.join_strategy || data.transformation_description) && (
+            <div className="mt-6 space-y-4 rounded-lg border border-slate-200 bg-white p-6">
+              <h2 className="text-sm font-semibold text-slate-900">Join &amp; transformation</h2>
+              {data.join_strategy && (
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-500">Join strategy</dt>
+                  <dd className="mt-1 text-sm text-slate-700">{data.join_strategy}</dd>
+                </div>
+              )}
+              {data.transformation_description && (
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-500">Transformation</dt>
+                  <dd className="mt-1 text-sm text-slate-700">{data.transformation_description}</dd>
+                </div>
+              )}
+            </div>
+          )}
+
+          {data.sources.length > 0 && (
+            <div className="mt-6 rounded-lg border border-slate-200 bg-white p-6">
+              <h2 className="text-sm font-semibold text-slate-900">Provenance</h2>
+              <ul className="mt-4 space-y-4">
+                {data.sources.map((source, i) => (
+                  <li key={source.id} className="border-l-2 border-slate-200 pl-4">
+                    <p className="text-xs uppercase tracking-wide text-slate-500">Source {i + 1}</p>
+                    <p className="mt-1 text-sm font-medium text-slate-900">{source.name}</p>
+                    {source.description && <p className="mt-1 text-sm text-slate-600">{source.description}</p>}
+                    <p className="mt-1 text-xs text-slate-500">
+                      {source.extraction_date && `Extracted ${source.extraction_date}`}
+                      {source.extraction_date && source.reference_period && ' · '}
+                      {source.reference_period && `Reference period: ${source.reference_period}`}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </>
       )}
     </div>
