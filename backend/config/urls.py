@@ -14,6 +14,7 @@ urlpatterns = [
     path('api/core/', include('apps.dhis2.urls')),
     path('api/core/', include('apps.data_products.urls')),
     path('api/core/', include('apps.fhir.urls')),
+    path('api/core/', include('apps.terminology.urls')),
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]

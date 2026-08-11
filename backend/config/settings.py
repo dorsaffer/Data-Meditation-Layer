@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'apps.dhis2',
     'apps.data_products',
     'apps.fhir',
+    'apps.terminology',
 ]
 
 MIDDLEWARE = [
