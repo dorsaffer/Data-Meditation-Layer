@@ -132,9 +132,17 @@ def build_location(district) -> dict:
     }
 
 
-def build_measure(indicator) -> dict:
+def build_measure(indicator, codings: list[dict] | None = None) -> dict:
+    """FR6.4: `codings` are pre-resolved FHIR Coding dicts for this
+    indicator's *accepted* terminology mappings (see
+    apps.terminology.services.get_accepted_codings, called by
+    build_bundle) - passed in rather than looked up here so this
+    builder stays DB-free like every other one in this module. Omitted
+    entirely (no .group[].code) when nothing has been accepted yet,
+    rather than guessing a code.
+    """
     measure_id = f'measure-{indicator.dhis2_dx_uid}'
-    return {
+    measure = {
         'resourceType': 'Measure',
         'id': measure_id,
         'url': f'{CANONICAL_BASE}/Measure/{measure_id}',
@@ -154,11 +162,20 @@ def build_measure(indicator) -> dict:
             }],
         },
     }
+    if codings:
+        measure['group'] = [{'code': {'coding': codings, 'text': indicator.name}}]
+    return measure
 
 
 def build_measure_report(observation, measure: dict) -> dict:
     start, end = parse_dhis2_period(observation.period)
     district = observation.district
+    group = {'measureScore': {'value': observation.value}}
+    # Mirrors Measure.group[].code when present, per FHIR MeasureReport
+    # convention (the report's group should restate what the measure
+    # definition it reports against was measuring).
+    if measure.get('group') and measure['group'][0].get('code'):
+        group['code'] = measure['group'][0]['code']
     return {
         'resourceType': 'MeasureReport',
         'id': f'measurereport-{observation.indicator.dhis2_dx_uid}-{district.dhis2_org_unit_uid}-{observation.period}',
@@ -169,7 +186,7 @@ def build_measure_report(observation, measure: dict) -> dict:
         'date': timezone.now().isoformat(),
         'reporter': {'reference': f'Organization/{ORGANIZATION_ID}'},
         'period': {'start': start.isoformat(), 'end': end.isoformat()},
-        'group': [{'measureScore': {'value': observation.value}}],
+        'group': [group],
     }
 
 
@@ -221,8 +238,15 @@ def build_bundle(indicator) -> dict:
     RawDHIS2Record rows. Reads Observations from the DB but performs no
     writes and no HTTP - kept separate from services.py's
     validate/persist orchestration.
+
+    FR6.4: also resolves this indicator's *accepted* terminology
+    mappings (apps.terminology.services.get_accepted_codings) into the
+    Measure/MeasureReport - a PROPOSED or REJECTED mapping is
+    structurally invisible to this function, since get_accepted_codings
+    only ever queries status=ACCEPTED rows.
     """
     from apps.data_products.models import Observation
+    from apps.terminology.services import get_accepted_codings
 
     observations = (
         Observation.objects
@@ -232,7 +256,8 @@ def build_bundle(indicator) -> dict:
 
     organization = build_organization()
     country = build_country_location()
-    measure = build_measure(indicator)
+    codings = get_accepted_codings('DHIS2', indicator.dhis2_dx_uid)
+    measure = build_measure(indicator, codings=codings)
 
     districts_by_uid = {}
     measure_reports = []
