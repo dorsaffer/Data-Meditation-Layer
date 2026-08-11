@@ -1,22 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+
+import { useAuth } from '@/lib/auth-context'
 
 export default function Home() {
-  const [status, setStatus] = useState<string>('checking…')
+  const { me, isLoading } = useAuth()
+  const router = useRouter()
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-    fetch(`${apiUrl}/api/health/`)
-      .then((r) => r.json())
-      .then((d) => setStatus(d.status))
-      .catch(() => setStatus('unreachable'))
-  }, [])
+    if (isLoading) return
+    router.replace(me ? '/products' : '/login')
+  }, [isLoading, me, router])
 
-  return (
-    <main style={{ fontFamily: 'monospace', padding: '2rem' }}>
-      <h1>SL Health Mediation Layer</h1>
-      <p>Backend: <strong>{status}</strong></p>
-    </main>
-  )
+  return <p className="p-8 text-sm text-slate-500">Loading…</p>
 }
