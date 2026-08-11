@@ -1,13 +1,15 @@
 from django.core.management.base import BaseCommand
 
 from apps.data_products.models import Indicator
+from apps.data_products.quality import run_quality_checks
 from apps.data_products.services import sync_data_product, transform_raw_records
 
 
 class Command(BaseCommand):
     help = (
         'FR2: transform RawDHIS2Record rows into the canonical model '
-        '(District/Indicator/Observation) and sync DataProduct governance metadata.'
+        '(District/Indicator/Observation), sync DataProduct governance metadata, and run '
+        'the FR6.6 data-quality assessment.'
     )
 
     def handle(self, *args, **options):
@@ -20,8 +22,10 @@ class Command(BaseCommand):
         indicators = Indicator.objects.filter(id__in=result['indicator_ids'])
         for indicator in indicators:
             product = sync_data_product(indicator)
+            product = run_quality_checks(product)
             self.stdout.write(
                 f'  DataProduct synced: "{product.title}" '
                 f'(transformation_status={product.transformation_status}, '
+                f'quality_status={product.quality_status}, '
                 f'coverage={product.temporal_coverage_start}..{product.temporal_coverage_end})'
             )

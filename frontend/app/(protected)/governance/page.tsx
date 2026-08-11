@@ -1,6 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
+import Link from 'next/link'
 
 import { Badge } from '@/components/Badge'
 import { ForbiddenNotice } from '@/components/ForbiddenNotice'
@@ -64,10 +65,12 @@ export default function GovernancePage() {
         </Section>
 
         <Section
-          title="Pipeline & quality status"
+          title="Pipeline & publication decision"
           description={
-            'The system does not currently track a separate "publication status" workflow — these are the ' +
-            'real status signals it does track: pipeline stage and quality screening result, per data product.'
+            'FR6.6: pipeline stage plus the data-quality assessment\'s publish / publish-with-warnings / ' +
+            'blocked decision, per data product. "Blocked" always means either an automated blocker check ' +
+            'failed or a data steward has not yet completed governance review — see the product detail page ' +
+            'for the full per-check breakdown.'
           }
         >
           {products && (
@@ -77,20 +80,26 @@ export default function GovernancePage() {
                   <tr>
                     <th className="px-4 py-2">Data product</th>
                     <th className="px-4 py-2">Pipeline stage</th>
-                    <th className="px-4 py-2">Quality</th>
+                    <th className="px-4 py-2">Publication decision</th>
+                    <th className="px-4 py-2">Human review</th>
                     <th className="px-4 py-2">Last updated</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {products.map((p) => (
                     <tr key={p.id}>
-                      <td className="px-4 py-2 font-medium text-slate-900">{p.title}</td>
+                      <td className="px-4 py-2 font-medium text-slate-900">
+                        <Link href={`/products/${p.id}`} className="hover:underline">
+                          {p.title}
+                        </Link>
+                      </td>
                       <td className="px-4 py-2">
                         <Badge value={p.transformation_status} />
                       </td>
                       <td className="px-4 py-2">
                         <Badge value={p.quality_status} />
                       </td>
+                      <td className="px-4 py-2 text-slate-600">{p.governance_reviewed ? 'Reviewed' : 'Pending'}</td>
                       <td className="px-4 py-2 text-slate-500">{new Date(p.updated_at).toLocaleString()}</td>
                     </tr>
                   ))}

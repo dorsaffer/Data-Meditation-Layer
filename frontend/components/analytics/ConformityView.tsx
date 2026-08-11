@@ -9,30 +9,44 @@ import { RoleGate } from '@/components/RoleGate'
 import { DataProduct, FHIRValidationResult } from '@/lib/api-client'
 import { useApiResource } from '@/lib/hooks/use-api-resource'
 
+const QUALITY_STATUS_ORDER = ['unscreened', 'publishable', 'publishable_with_warnings', 'blocked']
+
 export function ConformityView() {
   const { data: products } = useApiResource<DataProduct[]>('/api/core/data-products/')
 
   const qualityCounts = useMemo(() => {
-    const counts: Record<string, number> = { passed: 0, flagged: 0, unscreened: 0 }
+    const counts: Record<string, number> = { unscreened: 0, publishable: 0, publishable_with_warnings: 0, blocked: 0 }
     products?.forEach((p) => {
       counts[p.quality_status] = (counts[p.quality_status] ?? 0) + 1
     })
-    return Object.entries(counts).map(([status, count]) => ({ status, count }))
+    return QUALITY_STATUS_ORDER.map((status) => ({ status, count: counts[status] ?? 0 }))
   }, [products])
 
   return (
     <div className="space-y-8">
       <div>
-        <h3 className="text-sm font-medium text-slate-700">Data product quality status</h3>
+        <h3 className="text-sm font-medium text-slate-700">Publication decision (FR6.6)</h3>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={qualityCounts} layout="vertical" margin={{ left: 24 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
-            <YAxis dataKey="status" type="category" tick={{ fontSize: 12 }} width={90} />
+            <YAxis dataKey="status" type="category" tick={{ fontSize: 12 }} width={160} />
             <Tooltip />
             <Bar dataKey="count" fill="#0f172a" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-medium text-slate-700">Data quality assessment, per product</h3>
+        <p className="mt-1 text-xs text-slate-500">
+          Every check is labeled by method — deterministic (a hard fact), heuristic (a statistical judgement
+          call, can have false positives), or a required human approval that is never evaluated by code.
+        </p>
+        <div className="mt-3 space-y-4">
+          {products?.map((product) => <QualityChecksCard key={product.id} product={product} />)}
+          {products?.length === 0 && <p className="text-sm text-slate-400">No data products yet.</p>}
+        </div>
       </div>
 
       <div>
@@ -43,6 +57,50 @@ export function ConformityView() {
           </RoleGate>
         </div>
       </div>
+    </div>
+  )
+}
+
+function QualityChecksCard({ product }: { product: DataProduct }) {
+  return (
+    <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+      <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-3">
+        <p className="text-sm font-medium text-slate-900">{product.title}</p>
+        <Badge value={product.quality_status} />
+      </div>
+      <table className="min-w-full divide-y divide-slate-200 text-sm">
+        <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+          <tr>
+            <th className="px-4 py-2">Check</th>
+            <th className="px-4 py-2">Method</th>
+            <th className="px-4 py-2">Result</th>
+            <th className="px-4 py-2">Detail</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {product.quality_checks.map((check) => (
+            <tr key={check.id}>
+              <td className="px-4 py-2 text-slate-900">{check.check_name}</td>
+              <td className="px-4 py-2">
+                <Badge value={check.method} />
+              </td>
+              <td className="px-4 py-2">
+                <span className={check.passed ? 'text-emerald-700' : 'text-red-700'}>
+                  {check.passed ? 'Pass' : 'Fail'}
+                </span>
+              </td>
+              <td className="px-4 py-2 text-slate-600">{check.detail}</td>
+            </tr>
+          ))}
+          {product.quality_checks.length === 0 && (
+            <tr>
+              <td colSpan={4} className="px-4 py-4 text-center text-slate-400">
+                Not yet screened.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   )
 }

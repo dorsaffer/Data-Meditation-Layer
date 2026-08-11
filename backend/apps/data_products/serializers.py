@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import DataProduct, DataProductSource, District, Indicator, Observation
+from .models import DataProduct, DataProductSource, District, Indicator, Observation, QualityCheckResult
 
 
 class DistrictSerializer(serializers.ModelSerializer):
@@ -30,9 +30,16 @@ class DataProductSourceSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'description', 'extraction_date', 'reference_period')
 
 
+class QualityCheckResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QualityCheckResult
+        fields = ('id', 'check_code', 'check_name', 'method', 'severity', 'passed', 'detail', 'checked_at')
+
+
 class DataProductSerializer(serializers.ModelSerializer):
     indicator = IndicatorSerializer(read_only=True)
     sources = DataProductSourceSerializer(many=True, read_only=True)
+    quality_checks = QualityCheckResultSerializer(many=True, read_only=True)
 
     class Meta:
         model = DataProduct
