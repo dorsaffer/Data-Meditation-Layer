@@ -97,6 +97,26 @@ class ResourceBuilderTests(SimpleTestCase):
         self.assertEqual(report['group'][0]['measureScore']['value'], 2875.0)
         self.assertEqual(report['period'], {'start': '2025-08-01', 'end': '2025-08-31'})
 
+    def test_build_measure_report_suppresses_small_cell_value(self):
+        """FR6.7: a disclosive small count must never appear in an
+        exported MeasureReport - it's generalised to a '< threshold'
+        Quantity instead of the true value.
+        """
+        small_observation = Observation(
+            indicator=self.indicator, district=self.district, period='202508', value=3.0,
+        )
+        measure = build_measure(self.indicator)
+        report = build_measure_report(small_observation, measure)
+        self.assertEqual(report['group'][0]['measureScore'], {'value': 5, 'comparator': '<'})
+
+    def test_build_measure_report_does_not_suppress_value_at_threshold(self):
+        at_threshold_observation = Observation(
+            indicator=self.indicator, district=self.district, period='202508', value=5.0,
+        )
+        measure = build_measure(self.indicator)
+        report = build_measure_report(at_threshold_observation, measure)
+        self.assertEqual(report['group'][0]['measureScore'], {'value': 5.0})
+
     def test_build_provenance_targets_every_measure_report(self):
         measure = build_measure(self.indicator)
         report = build_measure_report(self.observation, measure)

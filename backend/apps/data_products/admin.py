@@ -30,7 +30,8 @@ class DataProductSourceInline(admin.TabularInline):
 
 
 class QualityCheckResultInline(admin.TabularInline):
-    """The FR6.6 assessment itself - read-only, since it's entirely
+    """The FR6.6/FR6.7 assessment itself (privacy checks are prefixed
+    `privacy_` in check_code) - read-only, since it's entirely
     recomputed by run_quality_checks() (see the recompute_quality_checks
     admin action below), never hand-edited.
     """
@@ -50,7 +51,7 @@ class DataProductAdmin(admin.ModelAdmin):
     geographic_coverage, schema_version, sensitivity_classification,
     permitted_audience, join_strategy, transformation_description,
     governance_reviewed) are editable here — that's the intended way to
-    make the "restricted/admin-only" defaults, and the FR6.6 human
+    make the "prohibited/no-audience" default, and the FR6.6/FR6.7 human
     sign-off, a deliberate human decision. Pipeline-derived fields are
     read-only since sync_data_product()/run_quality_checks() would just
     overwrite manual edits to them. join_strategy/transformation_description
@@ -70,7 +71,7 @@ class DataProductAdmin(admin.ModelAdmin):
     inlines = [DataProductSourceInline, QualityCheckResultInline]
     actions = ['recompute_quality_checks']
 
-    @admin.action(description='Recompute FR6.6 data-quality assessment')
+    @admin.action(description='Recompute FR6.6/FR6.7 quality & privacy assessment')
     def recompute_quality_checks(self, request, queryset):
         for product in queryset:
             run_quality_checks(product)

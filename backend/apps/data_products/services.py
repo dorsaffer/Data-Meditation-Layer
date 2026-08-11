@@ -89,8 +89,10 @@ def sync_data_product(indicator: Indicator) -> DataProduct:
             'source': f'DHIS2 Sierra Leone demo instance ({settings.DHIS2_BASE_URL})',
             'geographic_coverage': 'Sierra Leone — all districts',
             'schema_version': '1.0',
-            'sensitivity_classification': DataProduct.SensitivityClassification.RESTRICTED,
-            'permitted_audience': ['admin'],
+            # sensitivity_classification/permitted_audience deliberately omitted: the
+            # model default (PROHIBITED / no audience) is already the conservative
+            # starting point - repeating it here would just be a second place to
+            # keep in sync with SensitivityClassification's most-restrictive value.
         },
     )
 
