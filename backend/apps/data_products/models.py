@@ -62,7 +62,8 @@ class DataProduct(models.Model):
     quality_status); on first creation it defaults to the most
     conservative values (restricted / admin-only) precisely so nothing
     gets silently treated as "safe to share" without a human decision
-    made through the admin form.
+    made through the admin form. governance_reviewed is likewise a
+    human-only field (default False) - see apps.data_products.quality.
     """
 
     class SensitivityClassification(models.TextChoices):
@@ -77,8 +78,9 @@ class DataProduct(models.Model):
 
     class QualityStatus(models.TextChoices):
         UNSCREENED = 'unscreened', 'Unscreened'
-        PASSED = 'passed', 'Passed'
-        FLAGGED = 'flagged', 'Flagged'
+        PUBLISHABLE = 'publishable', 'Publishable'
+        PUBLISHABLE_WITH_WARNINGS = 'publishable_with_warnings', 'Publishable with warnings'
+        BLOCKED = 'blocked', 'Blocked'
 
     title = models.CharField(max_length=255)
     purpose = models.TextField(blank=True, default='')
@@ -97,7 +99,7 @@ class DataProduct(models.Model):
         max_length=20, choices=TransformationStatus.choices, default=TransformationStatus.RAW_ONLY
     )
     quality_status = models.CharField(
-        max_length=20, choices=QualityStatus.choices, default=QualityStatus.UNSCREENED
+        max_length=30, choices=QualityStatus.choices, default=QualityStatus.UNSCREENED
     )
     # M2M-to-roles would be premature: no Role model exists yet (RBAC is
     # a later phase). A list of role-name strings is the isolated,
@@ -123,6 +125,16 @@ class DataProduct(models.Model):
     transformation_description = models.TextField(
         blank=True, default='',
         help_text='The transformation/formula applied, e.g. a derived metric definition.',
+    )
+    # Human-only governance gate, same "never inferred, human decision through
+    # the admin form" pattern as sensitivity_classification/permitted_audience.
+    # apps.data_products.quality reads this but never writes it - a data
+    # steward must explicitly confirm review before a product can reach
+    # publishable, no matter what the automated checks find.
+    governance_reviewed = models.BooleanField(
+        default=False,
+        help_text='A data steward has reviewed sensitivity_classification and permitted_audience '
+                   'for this product. Required before it can be marked publishable.',
     )
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -155,3 +167,46 @@ class DataProductSource(models.Model):
 
     def __str__(self):
         return f'{self.data_product.title} <- {self.name}'
+
+
+class QualityCheckResult(models.Model):
+    """One data-quality check's result for one DataProduct - the FR6.6
+    "visible quality assessment" itself. Recomputed from scratch on every
+    run of apps.data_products.quality.run_quality_checks() (same
+    idempotent-recompute pattern as PopulationDataQualityIssue): never an
+    accumulating log, always the current state.
+
+    method distinguishes how much a human should trust an automated
+    "passed" without re-checking it themselves: deterministic checks are
+    hard facts (a regex match, a count, a DB constraint); heuristic
+    checks are statistical judgement calls (e.g. an outlier threshold)
+    that can have false positives/negatives; human_required checks are
+    never actually evaluated by code - they read a decision a person
+    already made (see DataProduct.governance_reviewed) and fail closed
+    until that happens.
+    """
+
+    class Method(models.TextChoices):
+        DETERMINISTIC = 'deterministic', 'Deterministic'
+        HEURISTIC = 'heuristic', 'Heuristic'
+        HUMAN_REQUIRED = 'human_required', 'Requires human approval'
+
+    class Severity(models.TextChoices):
+        INFO = 'info', 'Info'
+        WARNING = 'warning', 'Warning'
+        BLOCKER = 'blocker', 'Blocker'
+
+    data_product = models.ForeignKey(DataProduct, on_delete=models.CASCADE, related_name='quality_checks')
+    check_code = models.CharField(max_length=50)
+    check_name = models.CharField(max_length=255)
+    method = models.CharField(max_length=20, choices=Method.choices)
+    severity = models.CharField(max_length=10, choices=Severity.choices)
+    passed = models.BooleanField()
+    detail = models.TextField()
+    checked_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['id']
+
+    def __str__(self):
+        return f'{self.data_product.title} / {self.check_name}: {"pass" if self.passed else "fail"}'
