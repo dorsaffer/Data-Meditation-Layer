@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 
+from apps.audit.context import audit_context
 from apps.dhis2.client import DHIS2ClientError
 from apps.dhis2.services import fetch_and_store
 
@@ -20,10 +21,11 @@ class Command(BaseCommand):
         parser.add_argument('--pe', default='LAST_12_MONTHS', help='Period (default: LAST_12_MONTHS)')
 
     def handle(self, *args, **options):
-        try:
-            result = fetch_and_store(dx=options['dx'], ou=options['ou'], pe=options['pe'])
-        except DHIS2ClientError as exc:
-            raise CommandError(str(exc))
+        with audit_context(actor='system:fetch_dhis2_data'):
+            try:
+                result = fetch_and_store(dx=options['dx'], ou=options['ou'], pe=options['pe'])
+            except DHIS2ClientError as exc:
+                raise CommandError(str(exc))
 
         self.stdout.write(self.style.SUCCESS(
             f"Done. Created: {result['created']}, Updated: {result['updated']}, Total rows: {result['total']}"

@@ -47,6 +47,8 @@ from typing import Iterable
 
 from django.utils import timezone
 
+from apps.audit.models import AuditEvent
+from apps.audit.services import record_event
 from apps.data_products.models import DataProduct, District, Observation, QualityCheckResult
 from apps.data_products.privacy import run_privacy_checks
 from apps.dhis2.models import RawDHIS2Record
@@ -88,6 +90,17 @@ def run_quality_checks(product: DataProduct) -> DataProduct:
     run_privacy_checks(product)
     _check_governance_review(product)
     _apply_decision(product)
+
+    checks = QualityCheckResult.objects.filter(data_product=product)
+    record_event(
+        AuditEvent.Action.DATA_VALIDATION, AuditEvent.Outcome.SUCCESS,
+        resource_type='DataProduct', resource_id=product.id,
+        detail={
+            'checks_run': checks.count(),
+            'blockers': checks.filter(passed=False, severity=Severity.BLOCKER).count(),
+            'warnings': checks.filter(passed=False, severity=Severity.WARNING).count(),
+        },
+    )
     return product
 
 
@@ -375,3 +388,15 @@ def _apply_decision(product: DataProduct) -> None:
 
     product.quality_status = decision
     product.save(update_fields=['quality_status'])
+
+    if checks.exists():
+        # FR6.8: DATASET_PUBLICATION - only logged once a real decision has
+        # been computed (UNSCREENED, the no-checks-yet state, isn't a
+        # publication decision). BLOCKED reads as DENIED - the product was
+        # not allowed to publish - everything else as SUCCESS.
+        record_event(
+            AuditEvent.Action.DATASET_PUBLICATION,
+            AuditEvent.Outcome.DENIED if decision == DataProduct.QualityStatus.BLOCKED else AuditEvent.Outcome.SUCCESS,
+            resource_type='DataProduct', resource_id=product.id,
+            detail={'decision': decision},
+        )

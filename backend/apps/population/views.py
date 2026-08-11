@@ -3,13 +3,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import ANALYST, AUDITOR, HasAnyRole
+from apps.audit.mixins import AuditedReadOnlyViewSetMixin
 
 from .models import DistrictPopulation, PopulationDataQualityIssue
 from .serializers import DistrictPopulationSerializer, PopulationDataQualityIssueSerializer
 from .services import compute_service_coverage
 
 
-class DistrictPopulationViewSet(viewsets.ReadOnlyModelViewSet):
+class DistrictPopulationViewSet(AuditedReadOnlyViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """Canonical, reconciled population per DHIS2 district - gated the
     same as Observations (analyst, auditor): it's analytical data meant
     to be read alongside service-activity figures, not raw ingestion.
@@ -25,7 +26,7 @@ class DistrictPopulationViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
 
-class PopulationDataQualityIssueViewSet(viewsets.ReadOnlyModelViewSet):
+class PopulationDataQualityIssueViewSet(AuditedReadOnlyViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """The population-integration data-quality report - gated the same
     as FHIRValidationResult (analyst, auditor): it's a quality report,
     not raw source data.

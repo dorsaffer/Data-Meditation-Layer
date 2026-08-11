@@ -11,6 +11,9 @@ to fake.
 from django.contrib import admin
 from django.utils import timezone
 
+from apps.audit.models import AuditEvent
+from apps.audit.services import record_event
+
 from .models import TerminologyMapping
 from .services import review_mapping
 
@@ -45,6 +48,12 @@ class TerminologyMappingAdmin(admin.ModelAdmin):
                 approve=obj.status == TerminologyMapping.Status.ACCEPTED,
                 rationale=obj.rationale,
             )
+            record_event(
+                AuditEvent.Action.ADMIN_CHANGE, AuditEvent.Outcome.SUCCESS,
+                resource_type='TerminologyMapping', resource_id=obj.id,
+                actor=request.user.username,
+                detail={'status': obj.status},
+            )
             return
 
         if status_changed and obj.status == TerminologyMapping.Status.UNMAPPED:
@@ -52,3 +61,9 @@ class TerminologyMappingAdmin(admin.ModelAdmin):
             obj.reviewed_at = timezone.now()
 
         super().save_model(request, obj, form, change)
+        record_event(
+            AuditEvent.Action.ADMIN_CHANGE, AuditEvent.Outcome.SUCCESS,
+            resource_type='TerminologyMapping', resource_id=obj.id,
+            actor=request.user.username,
+            detail={'changed_fields': form.changed_data},
+        )

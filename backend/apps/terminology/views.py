@@ -3,12 +3,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.accounts.permissions import ANALYST, AUDITOR, HasAnyRole
+from apps.audit.mixins import AuditedReadOnlyViewSetMixin
 
 from .models import TerminologyMapping
 from .serializers import TerminologyMappingSerializer
 
 
-class TerminologyMappingViewSet(viewsets.ReadOnlyModelViewSet):
+class TerminologyMappingViewSet(AuditedReadOnlyViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """FR6.4: read-only view of the mapping catalog. Writes (propose/
     review) happen through the Django admin (see admin.py) or the
     apps.terminology.services functions directly - same "governance

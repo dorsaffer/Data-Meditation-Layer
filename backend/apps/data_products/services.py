@@ -27,6 +27,8 @@ import logging
 
 from django.conf import settings
 
+from apps.audit.models import AuditEvent, ProvenanceRecord
+from apps.audit.services import record_event, record_provenance
 from apps.data_products.models import DataProduct, District, Indicator, Observation
 from apps.dhis2.models import RawDHIS2Record
 
@@ -70,6 +72,15 @@ def transform_raw_records() -> dict:
             created += 1
         else:
             updated += 1
+
+    record_event(
+        AuditEvent.Action.DATA_TRANSFORMATION, AuditEvent.Outcome.SUCCESS,
+        resource_type='Observation',
+        detail={
+            'created': created, 'updated': updated, 'skipped': skipped,
+            'indicator_count': len(touched_indicator_ids),
+        },
+    )
 
     return {
         'created': created,
@@ -117,4 +128,14 @@ def sync_data_product(indicator: Indicator) -> DataProduct:
     # (a later phase sets it to passed/flagged based on QualityFlags).
 
     product.save()
+
+    record_provenance(
+        activity=ProvenanceRecord.Activity.TRANSFORMED,
+        description=(
+            f'Synced canonical Observations for indicator "{indicator.name}" into '
+            f'DataProduct "{product.title}".'
+        ),
+        data_product=product, resource_type='DataProduct', resource_id=product.id,
+        source_reference=f'RawDHIS2Record dx_uid={indicator.dhis2_dx_uid}',
+    )
     return product

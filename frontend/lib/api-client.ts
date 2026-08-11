@@ -279,6 +279,53 @@ export interface ServiceCoverageRow {
   potentially_underserved: boolean;
 }
 
+// FR6.8: the audit trail. AuditEvent = who did what to the system (access/
+// security activity); ProvenanceRecord = how a dataset's content came to
+// be (data lineage) - see docs/audit.md for the full distinction.
+export type AuditAction =
+  | "authentication"
+  | "access_denied"
+  | "data_acquisition"
+  | "data_transformation"
+  | "data_validation"
+  | "dataset_publication"
+  | "dataset_view"
+  | "dataset_download"
+  | "admin_change";
+export type AuditOutcome = "success" | "denied" | "failure";
+
+export interface AuditEvent {
+  id: number;
+  actor: string;
+  organisation: string;
+  action: AuditAction;
+  resource_type: string;
+  resource_id: string;
+  outcome: AuditOutcome;
+  correlation_id: string;
+  detail: Record<string, unknown>;
+  timestamp: string;
+}
+
+export type ProvenanceActivity =
+  | "acquired"
+  | "transformed"
+  | "validated"
+  | "derived";
+
+export interface ProvenanceRecord {
+  id: number;
+  data_product: number | null;
+  resource_type: string;
+  resource_id: string;
+  activity: ProvenanceActivity;
+  description: string;
+  source_reference: string;
+  performed_by: string;
+  correlation_id: string;
+  occurred_at: string;
+}
+
 export interface ServiceCoverageResponse {
   indicator: string | null;
   period: string | null;
