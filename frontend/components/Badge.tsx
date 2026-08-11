@@ -3,10 +3,20 @@ const COLOR_MAP: Record<string, string> = {
   public: 'bg-emerald-100 text-emerald-800',
   restricted: 'bg-amber-100 text-amber-800',
   confidential: 'bg-red-100 text-red-800',
-  // quality_status / fhir validity
+  // quality_status (FR6.6 publication decision) / fhir validity
   passed: 'bg-emerald-100 text-emerald-800',
+  publishable: 'bg-emerald-100 text-emerald-800',
+  publishable_with_warnings: 'bg-amber-100 text-amber-800',
+  blocked: 'bg-red-100 text-red-800',
   flagged: 'bg-red-100 text-red-800',
   unscreened: 'bg-slate-100 text-slate-700',
+  // quality check method / severity
+  deterministic: 'bg-sky-100 text-sky-800',
+  heuristic: 'bg-violet-100 text-violet-800',
+  human_required: 'bg-amber-100 text-amber-800',
+  info: 'bg-slate-100 text-slate-700',
+  warning: 'bg-amber-100 text-amber-800',
+  blocker: 'bg-red-100 text-red-800',
   // transformation_status
   raw_only: 'bg-slate-100 text-slate-700',
   canonical: 'bg-sky-100 text-sky-800',
