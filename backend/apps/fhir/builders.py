@@ -168,9 +168,23 @@ def build_measure(indicator, codings: list[dict] | None = None) -> dict:
 
 
 def build_measure_report(observation, measure: dict) -> dict:
+    """FR6.7: small-cell suppression applies here too, not just to the
+    analytics API - a MeasureReport is a publishable artefact in its own
+    right. A disclosive count (< privacy.SMALL_CELL_THRESHOLD) is
+    generalised to a FHIR Quantity with comparator='<', the standard
+    FHIR way to express "less than this value" - the exact count never
+    appears in the exported Bundle, but the report still carries a
+    genuinely useful upper bound rather than being blanked out.
+    """
+    from apps.data_products.privacy import SMALL_CELL_THRESHOLD, is_small_cell
+
     start, end = parse_dhis2_period(observation.period)
     district = observation.district
-    group = {'measureScore': {'value': observation.value}}
+    if is_small_cell(observation.value):
+        measure_score = {'value': SMALL_CELL_THRESHOLD, 'comparator': '<'}
+    else:
+        measure_score = {'value': observation.value}
+    group = {'measureScore': measure_score}
     # Mirrors Measure.group[].code when present, per FHIR MeasureReport
     # convention (the report's group should restate what the measure
     # definition it reports against was measuring).

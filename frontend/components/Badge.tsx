@@ -1,8 +1,11 @@
 const COLOR_MAP: Record<string, string> = {
-  // sensitivity_classification
+  // sensitivity_classification (FR6.7 taxonomy, ordered least -> most restrictive)
   public: 'bg-emerald-100 text-emerald-800',
-  restricted: 'bg-amber-100 text-amber-800',
-  confidential: 'bg-red-100 text-red-800',
+  internal: 'bg-sky-100 text-sky-800',
+  sensitive: 'bg-amber-100 text-amber-800',
+  personal: 'bg-orange-100 text-orange-800',
+  potentially_identifying: 'bg-red-100 text-red-800',
+  prohibited: 'bg-red-200 text-red-900',
   // quality_status (FR6.6 publication decision) / fhir validity
   passed: 'bg-emerald-100 text-emerald-800',
   publishable: 'bg-emerald-100 text-emerald-800',

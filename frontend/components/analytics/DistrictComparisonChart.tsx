@@ -1,19 +1,29 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 import { ForbiddenNotice } from '@/components/ForbiddenNotice'
 import { Observation } from '@/lib/api-client'
 import { useApiResource } from '@/lib/hooks/use-api-resource'
+
+const SUPPRESSED_FILL = '#f59e0b' // amber-500 — matches the "warning" tone used elsewhere for suppressed/flagged data
+const NORMAL_FILL = '#0f172a'
 
 export function DistrictComparisonChart() {
   const { data, error, isLoading } = useApiResource<Observation[]>('/api/core/observations/')
   const [indicatorUid, setIndicatorUid] = useState('')
   const [period, setPeriod] = useState('')
 
-  const { indicators, periods, rows } = useMemo(() => {
-    if (!data) return { indicators: [] as [string, string][], periods: [] as string[], rows: [] as { district: string; value: number }[] }
+  const { indicators, periods, rows, hasSuppressed } = useMemo(() => {
+    if (!data) {
+      return {
+        indicators: [] as [string, string][],
+        periods: [] as string[],
+        rows: [] as { district: string; value: number; is_suppressed: boolean }[],
+        hasSuppressed: false,
+      }
+    }
 
     const indicatorMap = new Map<string, string>()
     const periodSet = new Set<string>()
@@ -28,9 +38,9 @@ export function DistrictComparisonChart() {
 
     const rows = data
       .filter((obs) => obs.indicator.dhis2_dx_uid === activeIndicator && obs.period === activePeriod)
-      .map((obs) => ({ district: obs.district.name, value: obs.value }))
+      .map((obs) => ({ district: obs.district.name, value: obs.value, is_suppressed: obs.is_suppressed }))
 
-    return { indicators, periods, rows }
+    return { indicators, periods, rows, hasSuppressed: rows.some((r) => r.is_suppressed) }
   }, [data, indicatorUid, period])
 
   if (error?.status === 403) return <ForbiddenNotice roles={['analyst', 'auditor']} />
@@ -69,10 +79,25 @@ export function DistrictComparisonChart() {
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
           <XAxis dataKey="district" tick={{ fontSize: 12 }} />
           <YAxis tick={{ fontSize: 12 }} />
-          <Tooltip />
-          <Bar dataKey="value" fill="#0f172a" radius={[4, 4, 0, 0]} />
+          <Tooltip
+            formatter={(value: number, _name, item) =>
+              item.payload.is_suppressed ? [`< ${value} (suppressed)`, 'value'] : [value, 'value']
+            }
+          />
+          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+            {rows.map((row) => (
+              <Cell key={row.district} fill={row.is_suppressed ? SUPPRESSED_FILL : NORMAL_FILL} />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
+      {hasSuppressed && (
+        <p className="mt-2 text-xs text-amber-700">
+          Amber bars are small-cell suppressed (FR6.7 privacy control): the true count is
+          below the disclosure-risk threshold and is shown as an upper bound, not its exact
+          value.
+        </p>
+      )}
     </div>
   )
 }

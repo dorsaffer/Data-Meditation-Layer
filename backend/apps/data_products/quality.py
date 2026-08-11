@@ -1,5 +1,9 @@
 """FR6.6: the visible data-quality assessment and publish/publish-with-
-warnings/blocked decision.
+warnings/blocked decision. This is also where FR6.7's privacy checks are
+run (apps.data_products.privacy.run_privacy_checks) - see that module's
+docstring for why it shares this table and decision rather than keeping
+a second one; `check_code` values from it are prefixed `privacy_` so
+they stay identifiable in this list.
 
 run_quality_checks(product) is the only writer of QualityCheckResult and
 of DataProduct.quality_status - deliberately mirroring
@@ -44,6 +48,7 @@ from typing import Iterable
 from django.utils import timezone
 
 from apps.data_products.models import DataProduct, District, Observation, QualityCheckResult
+from apps.data_products.privacy import run_privacy_checks
 from apps.dhis2.models import RawDHIS2Record
 
 DHIS2_PERIOD_RE = re.compile(r'^\d{4}(0[1-9]|1[0-2])?$')
@@ -80,6 +85,7 @@ def run_quality_checks(product: DataProduct) -> DataProduct:
     else:
         _run_population_rollup_checks(product)
 
+    run_privacy_checks(product)
     _check_governance_review(product)
     _apply_decision(product)
     return product

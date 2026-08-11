@@ -60,16 +60,29 @@ class DataProduct(models.Model):
     sync_data_product() only ever touches the pipeline-derived fields
     (refresh_date, temporal_coverage_*, transformation_status,
     quality_status); on first creation it defaults to the most
-    conservative values (restricted / admin-only) precisely so nothing
-    gets silently treated as "safe to share" without a human decision
-    made through the admin form. governance_reviewed is likewise a
-    human-only field (default False) - see apps.data_products.quality.
+    conservative value in SensitivityClassification (prohibited /
+    admin-only) precisely so nothing gets silently treated as "safe to
+    share" without a human decision made through the admin form.
+    governance_reviewed is likewise a human-only field (default False) -
+    see apps.data_products.quality. apps.data_products.privacy reads
+    sensitivity_classification (never writes it) to gate publication for
+    FR6.7 - see that module's PUBLISHABLE_TIERS.
     """
 
     class SensitivityClassification(models.TextChoices):
+        """FR6.7's required taxonomy, ordered least -> most restrictive.
+        Values below PERSONAL are eligible for publication (see
+        apps.data_products.privacy.PUBLISHABLE_TIERS); PERSONAL and
+        above always block quality_status from reaching publishable,
+        regardless of every other check, because no automated check in
+        this codebase can verify a human's classification judgement.
+        """
         PUBLIC = 'public', 'Public'
-        RESTRICTED = 'restricted', 'Restricted'
-        CONFIDENTIAL = 'confidential', 'Confidential'
+        INTERNAL = 'internal', 'Internal'
+        SENSITIVE = 'sensitive', 'Sensitive'
+        PERSONAL = 'personal', 'Personal'
+        POTENTIALLY_IDENTIFYING = 'potentially_identifying', 'Potentially identifying'
+        PROHIBITED = 'prohibited', 'Prohibited from publication'
 
     class TransformationStatus(models.TextChoices):
         RAW_ONLY = 'raw_only', 'Raw only'
@@ -92,8 +105,8 @@ class DataProduct(models.Model):
     temporal_coverage_end = models.CharField(max_length=20, blank=True, default='')
     schema_version = models.CharField(max_length=20, default='1.0')
     sensitivity_classification = models.CharField(
-        max_length=20, choices=SensitivityClassification.choices,
-        default=SensitivityClassification.RESTRICTED,
+        max_length=30, choices=SensitivityClassification.choices,
+        default=SensitivityClassification.PROHIBITED,
     )
     transformation_status = models.CharField(
         max_length=20, choices=TransformationStatus.choices, default=TransformationStatus.RAW_ONLY

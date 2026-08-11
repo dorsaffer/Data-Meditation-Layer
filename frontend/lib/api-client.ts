@@ -109,14 +109,20 @@ export interface Observation {
   indicator: Indicator;
   district: District;
   period: string;
+  /** FR6.7: small-cell suppressed - generalised to the suppression
+   * threshold (never the true value) when is_suppressed is true. */
   value: number;
+  is_suppressed: boolean;
   source_raw_record: number;
 }
 
 export type SensitivityClassification =
   | "public"
-  | "restricted"
-  | "confidential";
+  | "internal"
+  | "sensitive"
+  | "personal"
+  | "potentially_identifying"
+  | "prohibited";
 export type TransformationStatus = "raw_only" | "canonical" | "fhir_mapped";
 export type QualityStatus =
   | "unscreened"
