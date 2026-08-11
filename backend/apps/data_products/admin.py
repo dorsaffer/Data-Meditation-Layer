@@ -34,11 +34,6 @@ class DataProductSourceInline(admin.TabularInline):
 
 
 class QualityCheckResultInline(admin.TabularInline):
-    """The FR6.6/FR6.7 assessment itself (privacy checks are prefixed
-    `privacy_` in check_code) - read-only, since it's entirely
-    recomputed by run_quality_checks() (see the recompute_quality_checks
-    admin action below), never hand-edited.
-    """
     model = QualityCheckResult
     extra = 0
     fields = ('check_name', 'method', 'severity', 'passed', 'detail', 'checked_at')

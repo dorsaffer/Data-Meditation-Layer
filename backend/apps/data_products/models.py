@@ -24,7 +24,7 @@ class Indicator(models.Model):
 
 
 class Observation(models.Model):
-    """FR2: a single clean data point. Always keeps a link back to the
+    """a single clean data point. Always keeps a link back to the
     exact RawDHIS2Record it was cast from, so a clean number can always
     be traced to precisely what DHIS2 originally returned.
     """
@@ -70,13 +70,6 @@ class DataProduct(models.Model):
     """
 
     class SensitivityClassification(models.TextChoices):
-        """FR6.7's required taxonomy, ordered least -> most restrictive.
-        Values below PERSONAL are eligible for publication (see
-        apps.data_products.privacy.PUBLISHABLE_TIERS); PERSONAL and
-        above always block quality_status from reaching publishable,
-        regardless of every other check, because no automated check in
-        this codebase can verify a human's classification judgement.
-        """
         PUBLIC = 'public', 'Public'
         INTERNAL = 'internal', 'Internal'
         SENSITIVE = 'sensitive', 'Sensitive'

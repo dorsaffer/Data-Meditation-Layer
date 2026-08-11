@@ -1,4 +1,4 @@
-"""FR6.7: privacy-preserving processing.
+"""privacy-preserving processing.
 
 This module is the counterpart to apps.data_products.quality for
 privacy rather than data quality, but deliberately writes into the same

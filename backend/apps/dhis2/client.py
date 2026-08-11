@@ -1,7 +1,7 @@
 """DHIS2 analytics client.
 
-FR1.1: connect to the official Sierra Leone demo.
-FR1.2: retrieve aggregate indicators for districts/periods.
+1: connect to the official Sierra Leone demo.
+2: retrieve aggregate indicators for districts/periods.
 
 Read-only, source-specific extraction only — no transformation logic,
 no Django model access — so this module can later be pointed at a
@@ -52,7 +52,7 @@ class DHIS2Client:
         }
 
     def fetch_analytics(self, dx: list[str], ou: str, pe: str) -> list[dict]:
-        """FR1.2: pull /api/analytics for the given data elements, org
+        """pull /api/analytics for the given data elements, org
         unit level/UID and period, and parse the compact table response
         into one plain dict per row.
         """

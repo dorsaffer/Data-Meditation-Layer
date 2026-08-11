@@ -1,4 +1,4 @@
-"""FR6.6: the visible data-quality assessment and publish/publish-with-
+"""The visible data-quality assessment and publish/publish-with-
 warnings/blocked decision. This is also where FR6.7's privacy checks are
 run (apps.data_products.privacy.run_privacy_checks) - see that module's
 docstring for why it shares this table and decision rather than keeping

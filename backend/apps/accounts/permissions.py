@@ -5,11 +5,6 @@ Roles are plain Django ``Group`` rows (``data_provider``, ``analyst``,
 to a role is done through the stock Django admin User change form's
 "Groups" widget; no custom User model or extra app is needed for that.
 
-This intentionally does not implement organisation/tenant scoping (a data
-provider seeing only "their" org's records) - the assignment brief allows
-"role-based OR organisation-aware authorisation", and role-based is the
-simpler option it explicitly says is acceptable as long as the access
-decisions are real, testable and documented (see docs/rbac.md).
 """
 from rest_framework import permissions
 

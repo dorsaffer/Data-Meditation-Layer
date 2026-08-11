@@ -11,7 +11,7 @@ from apps.dhis2.models import RawDHIS2Record
 
 
 def fetch_and_store(dx: list[str], ou: str, pe: str) -> dict:
-    """FR1.2/FR1.3/FR1.4: pull the given slice and store it unmodified,
+    """pull the given slice and store it unmodified,
     updating existing rows on their natural key instead of duplicating.
 
     FR6.8: audited as a DATA_ACQUISITION event either way - a failed pull

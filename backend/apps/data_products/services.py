@@ -1,4 +1,4 @@
-"""FR2: RawDHIS2Record -> canonical model, and DataProduct governance sync.
+"""RawDHIS2Record -> canonical model, and DataProduct governance sync.
 
 transform_raw_records() is pure transformation logic — no HTTP.
 Idempotent: safe to re-run against the same raw records without

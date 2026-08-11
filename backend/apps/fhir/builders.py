@@ -1,4 +1,4 @@
-"""FR6.3: canonical model (District/Indicator/Observation) -> real HL7
+"""canonical model (District/Indicator/Observation) -> real HL7
 FHIR R4 resources, as plain JSON-serialisable dicts.
 
 Resource choices and why (see also apps/fhir/services.py for how they're
@@ -168,7 +168,7 @@ def build_measure(indicator, codings: list[dict] | None = None) -> dict:
 
 
 def build_measure_report(observation, measure: dict) -> dict:
-    """FR6.7: small-cell suppression applies here too, not just to the
+    """Small-cell suppression applies here too, not just to the
     analytics API - a MeasureReport is a publishable artefact in its own
     right. A disclosive count (< privacy.SMALL_CELL_THRESHOLD) is
     generalised to a FHIR Quantity with comparator='<', the standard

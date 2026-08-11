@@ -1,4 +1,4 @@
-"""FR6.4: Django admin is the reviewable interface for terminology
+"""Django admin is the reviewable interface for terminology
 mappings - the same pattern apps.data_products.admin.DataProductAdmin
 already uses for governance decisions (sensitivity_classification etc.
 are human-edited here, never inferred). A staff user opens a PROPOSED

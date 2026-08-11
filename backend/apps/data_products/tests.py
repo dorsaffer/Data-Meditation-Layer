@@ -84,7 +84,7 @@ class DataProductViewSetPermissionTests(RoleTestMixin, TestCase):
 
 
 class RunQualityChecksTests(TestCase):
-    """FR6.6: run_quality_checks() and the publish/publish-with-warnings/
+    """run_quality_checks() and the publish/publish-with-warnings/
     blocked decision it computes.
     """
 
@@ -250,7 +250,7 @@ class IsSmallCellTests(TestCase):
 
 
 class RunPrivacyChecksTests(TestCase):
-    """FR6.7: run_privacy_checks(), invoked from run_quality_checks(),
+    """run_privacy_checks(), invoked from run_quality_checks(),
     and how its findings feed the same publish/blocked decision as the
     FR6.6 checks.
     """
@@ -330,7 +330,7 @@ class RunPrivacyChecksTests(TestCase):
 
 
 class ObservationSerializerSuppressionTests(TestCase):
-    """FR6.7: the functional control itself - small-cell values must
+    """The functional control itself - small-cell values must
     never reach the serialized API response as their true value.
     """
 

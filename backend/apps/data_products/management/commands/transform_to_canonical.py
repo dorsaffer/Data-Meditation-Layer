@@ -8,7 +8,7 @@ from apps.data_products.services import sync_data_product, transform_raw_records
 
 class Command(BaseCommand):
     help = (
-        'FR2: transform RawDHIS2Record rows into the canonical model '
+        'Transform RawDHIS2Record rows into the canonical model '
         '(District/Indicator/Observation), sync DataProduct governance metadata, and run '
         'the FR6.6 data-quality assessment.'
     )

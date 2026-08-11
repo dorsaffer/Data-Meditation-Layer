@@ -1,4 +1,4 @@
-"""FR6.4: DHIS2 data element / local concept -> recognised terminology
+"""DHIS2 data element / local concept -> recognised terminology
 mapping, as an explicit, reviewable record independent of the DHIS2
 acquisition connector (apps.dhis2) and the canonical model
 (apps.data_products).

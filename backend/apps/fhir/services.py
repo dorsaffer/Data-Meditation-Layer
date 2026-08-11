@@ -1,4 +1,4 @@
-"""FR6.3: real FHIR conformity validation and export orchestration.
+"""Real FHIR conformity validation and export orchestration.
 
 validate_resource() is the actual conformity check the assessment
 requires - it POSTs to a self-hosted HAPI FHIR R4 server's $validate

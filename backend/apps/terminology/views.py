@@ -9,8 +9,8 @@ from .models import TerminologyMapping
 from .serializers import TerminologyMappingSerializer
 
 
-class TerminologyMappingViewSet(AuditedReadOnlyViewSetMixin, viewsets.ReadOnlyModelViewSet):
-    """FR6.4: read-only view of the mapping catalog. Writes (propose/
+class TerminologyMappingViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only view of the mapping catalog. Writes (propose/
     review) happen through the Django admin (see admin.py) or the
     apps.terminology.services functions directly - same "governance
     decisions aren't made through this API" split as DataProduct.

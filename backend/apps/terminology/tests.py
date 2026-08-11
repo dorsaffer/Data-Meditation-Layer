@@ -29,7 +29,7 @@ def _propose(**overrides):
 
 
 class ProposeMappingTests(TestCase):
-    """FR6.4: proposing a mapping must never be able to publish it."""
+    """Proposing a mapping must never be able to publish it."""
 
     def test_propose_creates_proposed_status_with_no_reviewer(self):
         mapping = _propose()
@@ -48,7 +48,7 @@ class ProposeMappingTests(TestCase):
 
 
 class ReviewMappingTests(TestCase):
-    """FR6.4: only review_mapping(), with a real reviewer, can accept or
+    """Only review_mapping(), with a real reviewer, can accept or
     reject - this is the architectural guarantee that AI/automation can
     never self-approve a medical mapping.
     """

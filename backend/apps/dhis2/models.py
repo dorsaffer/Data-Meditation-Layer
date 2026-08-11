@@ -2,7 +2,7 @@ from django.db import models
 
 
 class RawDHIS2Record(models.Model):
-    """FR1.3: one unmodified DHIS2 analytics data point — the
+    """ one unmodified DHIS2 analytics data point — the
     traceability anchor everything downstream points back to. Never
     edited directly; only ever added/refreshed via fetch_dhis2_data's
     update_or_create on (dx_uid, org_unit_uid, period).

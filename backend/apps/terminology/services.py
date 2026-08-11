@@ -1,4 +1,4 @@
-"""FR6.4: business logic for proposing, reviewing and consuming
+"""Business logic for proposing, reviewing and consuming
 terminology mappings. This module is the only place mapping status is
 allowed to change - apps/terminology/admin.py routes through it too
 (see TerminologyMappingAdmin.save_model), so there is exactly one code

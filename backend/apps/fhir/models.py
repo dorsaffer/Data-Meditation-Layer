@@ -2,7 +2,7 @@ from django.db import models
 
 
 class FHIRValidationResult(models.Model):
-    """FR6.3: persisted conformity evidence for one generated FHIR
+    """Persisted conformity evidence for one generated FHIR
     resource — proof that the resource was actually checked against a
     real FHIR R4 server (see apps.fhir.services.validate_resource),
     never merely assumed valid because it "looks like" FHIR. One row

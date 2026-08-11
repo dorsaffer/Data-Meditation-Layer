@@ -17,7 +17,7 @@ class IndicatorSerializer(serializers.ModelSerializer):
 
 
 class ObservationSerializer(serializers.ModelSerializer):
-    """FR6.7: `value` is small-cell suppressed here, at the one boundary
+    """`value` is small-cell suppressed here, at the one boundary
     every API consumer of Observations goes through - a district×period
     cell below SMALL_CELL_THRESHOLD is generalised to the threshold
     itself (never the true value, never null) so `value` stays a plain
