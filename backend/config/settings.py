@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'apps.accounts',
     'apps.dhis2',
     'apps.data_products',
     'apps.fhir',

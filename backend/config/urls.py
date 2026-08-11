@@ -16,4 +16,7 @@ urlpatterns = [
     path('api/core/', include('apps.fhir.urls')),
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # /api/auth/me/ - tells the frontend who's logged in and which roles
+    # (Groups) they hold, see apps/accounts/views.py.
+    path('api/auth/', include('apps.accounts.urls')),
 ]
