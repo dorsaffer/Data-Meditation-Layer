@@ -47,21 +47,49 @@ for what that does and doesn't mean for privacy risk.
 
 ## Architecture
 
-Text form, for anyone viewing this outside a Mermaid-capable renderer:
-
+```mermaid
+flowchart TB
+    subgraph external[External services]
+        DHIS2[DHIS2 demo API]
+        HAPI[HAPI FHIR R4 validator]
+    end
+    subgraph compose[docker-compose stack]
+        FE[Next.js frontend]
+        subgraph BE[Django + DRF backend]
+            DHIS2App[apps.dhis2]
+            DP[apps.data_products]
+            POP[apps.population]
+            TERM[apps.terminology]
+            FHIRApp[apps.fhir]
+            ACCT[apps.accounts]
+            AUDIT[apps.audit]
+        end
+        DB[(PostgreSQL)]
+    end
+    DHIS2 --> DHIS2App --> DP
+    POP --> DP
+    DP --> TERM --> FHIRApp
+    FHIRApp <--> HAPI
+    FE <--> BE
+    BE --> DB
 ```
-DHIS2 demo API ──┐                                      ┌── HAPI FHIR R4 validator
-                  ▼                                      ▼
-        apps.dhis2 (raw, unmodified) ──► apps.data_products (canonical + governance)
-                                                │              ▲
-2021 census CSV ──► apps.population ───────────┘              │
-                                                                │
-                        apps.terminology (ICD-10 mapping) ─────┘
-                                                │
-                                          apps.fhir (build + validate + export)
 
-apps.accounts   — JWT auth + role (Group) based authorisation, every app above
-apps.audit      — AuditEvent (access/security) + ProvenanceRecord (lineage), cross-cutting
+## Data flow and trust boundaries
+
+```mermaid
+flowchart TD
+    A[DHIS2 analytics API<br/>external network] --> B[Raw DHIS2 record<br/>data enters here]
+    B --> C[Canonical model + FHIR build<br/>transformation]
+    C --> D[Quality + privacy screening<br/>exposure risk]
+    D --> E[Role-gated API<br/>access decision]
+    E --> F[Frontend, per role<br/>provider / analyst / auditor]
+    B -.AuditEvent.-> G[Audit trail]
+    D -.AuditEvent.-> G
+    E -.AuditEvent.-> G
+    style B fill:#FAC775,stroke:#854F0B,color:#412402
+    style D fill:#F7C1C1,stroke:#A32D2D,color:#501313
+    style E fill:#B5D4F4,stroke:#185FA5,color:#042C53
+    style G fill:#9FE1CB,stroke:#0F6E56,color:#04342C
 ```
 
 | Layer           | Stack                                                                                    |
