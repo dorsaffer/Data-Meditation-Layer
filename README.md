@@ -111,23 +111,7 @@ Backend apps, each documented where the interesting logic is:
 | `apps.fhir`          | FHIR R4 resource building + real conformity validation.                                                 |
 | `apps.audit`         | `AuditEvent`/`ProvenanceRecord`, append-only, auditor-gated API.                                        |
 
-## Data flow and trust boundaries
 
-```mermaid
-flowchart TD
-    A[DHIS2 analytics API<br/>external network] --> B[Raw DHIS2 record<br/>data enters here]
-    B --> C[Canonical model + FHIR build<br/>transformation]
-    C --> D[Quality + privacy screening<br/>exposure risk]
-    D --> E[Role-gated API<br/>access decision]
-    E --> F[Frontend, per role<br/>provider / analyst / auditor]
-    B -.AuditEvent.-> G[Audit trail]
-    D -.AuditEvent.-> G
-    E -.AuditEvent.-> G
-    style B fill:#FAC775,stroke:#854F0B,color:#412402
-    style D fill:#F7C1C1,stroke:#A32D2D,color:#501313
-    style E fill:#B5D4F4,stroke:#185FA5,color:#042C53
-    style G fill:#9FE1CB,stroke:#0F6E56,color:#04342C
-```
 
 - **Amber** — where data enters the system (`apps.dhis2`, unauthenticated external source, treated as untrusted until screened).
 - **Red** — where sensitive information could be exposed: small-cell disclosure risk and identifier leakage are screened here (`apps.data_products`, see [`docs/privacy.md`](docs/privacy.md)), before anything is marked publishable.
@@ -161,7 +145,7 @@ docker compose exec backend python manage.py propose_terminology_mappings   # FR
 docker compose exec backend python manage.py export_fhir            # FR6.3: build + validate + export
 ```
 
-Log in to `http://localhost:8000/admin/` with the superuser to assign roles (Users →
+Log in to `http://localhost:8000/admin/` with the superuser to create and assign roles (Users →
 select a user → Groups) and review/approve governance decisions (data-product
 sensitivity classification, terminology mapping status). Log in to
 `http://localhost:3000` with any user that has a role assigned to use the app itself.
